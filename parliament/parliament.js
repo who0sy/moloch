@@ -1414,6 +1414,18 @@ router.get('/issues', (req, res, next) => {
   // filter out provisional issues
   issuesClone = issuesClone.filter((issue) => !issue.provisional);
 
+  if (req.query.filter) { // simple search for issues
+    let searchTerm = req.query.filter.toLowerCase();
+    issuesClone = issuesClone.filter((issue) => {
+      return issue.severity.toLowerCase().includes(searchTerm) ||
+        issue.cluster.toLowerCase().includes(searchTerm) ||
+        issue.message.toLowerCase().includes(searchTerm) ||
+        issue.title.toLowerCase().includes(searchTerm) ||
+        issue.node.toLowerCase().includes(searchTerm) ||
+        issue.text.toLowerCase().includes(searchTerm);
+    });
+  }
+
   let type = 'string';
   let sortBy = req.query.sort;
   if (sortBy === 'ignoreUntil' ||
