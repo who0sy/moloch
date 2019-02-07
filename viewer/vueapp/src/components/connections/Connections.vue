@@ -856,9 +856,7 @@ export default {
         // simulate gravity mutually amongst all nodes
         .force('charge', d3.forceManyBody().strength(-parseInt(this.query.nodeDist * 2)))
         // prevent elements from overlapping
-        .force('collision', d3.forceCollide().radius((d) => {
-          return 2 * Math.min(3 + Math.log(d.sessions), 12);
-        }))
+        .force('collision', d3.forceCollide().radius(this.calculateCollisionRadius))
         // set the graph center
         .force('center', d3.forceCenter(width / 2, height / 2))
         // positioning force along x-axis for disjoint graph
@@ -1020,17 +1018,21 @@ export default {
     },
     calculateLinkWeight: function (l) {
       let val = l[this.weight] || l.value;
-      val = Math.log((val - linkMin + 1) / linkScaleFactor);
+      val = Math.max(Math.log((val - linkMin) / linkScaleFactor), 0);
       return 1 + val;
     },
     calculateNodeWeight: function (n) {
       let val = n[this.weight] || n.sessions;
-      val = Math.log((val - nodeMin + 1) / nodeScaleFactor);
+      val = Math.max(Math.log((val - nodeMin) / nodeScaleFactor), 0);
       return 3 + val;
     },
     calculateNodeLabelOffset: function (nl) {
       let val = this.calculateNodeWeight(nl);
       return 2 + val;
+    },
+    calculateCollisionRadius: function (n) {
+      let val = this.calculateNodeWeight(n);
+      return 2 * val;
     },
     dbField2Type: function (dbField) {
       for (let k in this.fields) {
