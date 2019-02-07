@@ -1012,9 +1012,6 @@ export default {
       if (nodeScaleFactor < 1) { nodeScaleFactor = 1; }
       linkScaleFactor = (linkMax - linkMin) / maxLog;
       if (linkScaleFactor < 1) { linkScaleFactor = 1; }
-
-      console.log('node min, max, scale', nodeMin, nodeMax, nodeScaleFactor);
-      console.log('link min, max, scale', linkMin, linkMax, linkScaleFactor);
     },
     calculateLinkWeight: function (l) {
       let val = l[this.weight] || l.value;
