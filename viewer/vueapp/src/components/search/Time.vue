@@ -215,6 +215,7 @@ export default {
         enableSeconds: true, // display seconds in time picker
         minuteIncrement: 1, // increment minutes by 1 instead of 5 (default)
         time_24hr: true, // show 24 hour time instead of am/pm
+        parseDate: this.parseTimezoneDate, // show the date in the user configured timezone
         formatDate: this.formatTimezoneDate // show the date in the user configured timezone
       },
       stopTimeConfig: {
@@ -226,6 +227,7 @@ export default {
         enableSeconds: true, // display seconds in time picker
         minuteIncrement: 1, // increment minutes by 1 instead of 5 (default)
         time_24hr: true, // show 24 hour time instead of am/pm
+        parseDate: this.parseTimezoneDate, // show the date in the user configured timezone
         formatDate: this.formatTimezoneDate // show the date in the user configured timezone
       }
     };
@@ -340,7 +342,9 @@ export default {
         dateChanged = true;
         startDateCheck = msDate;
         this.localStartTime = date;
-        this.time.startTime = JSON.parse(JSON.stringify(msDate / 1000)).toString();
+        let d = JSON.parse(JSON.stringify((msDate / 1000)));
+        if (this.timezone === 'gmt') { d = d - 18000; }
+        this.time.startTime = d.toString();
       }
     },
     /**
@@ -354,7 +358,9 @@ export default {
         dateChanged = true;
         stopDateCheck = msDate;
         this.localStopTime = date;
-        this.time.stopTime = JSON.parse(JSON.stringify(msDate / 1000)).toString();
+        let d = JSON.parse(JSON.stringify((msDate / 1000)));
+        if (this.timezone === 'gmt') { d = d - 18000; }
+        this.time.stopTime = d.toString();
       }
     },
     /**
@@ -529,19 +535,51 @@ export default {
 
       if (change) { this.$emit('timeChange'); }
     },
-    /* format the date to include the user selcted timezone */
+    /**
+     * Format the date to include the user selcted timezone
+     * @param {number} date Seconds from 1970
+     */
     formatTimezoneDate: function (date) {
       let timezonedDate;
 
       if (this.timezone === 'gmt') {
-        timezonedDate = moment.tz(date, 'gmt').format('YYYY/MM/DD HH:mm:ss z');
+        timezonedDate = moment(date).format('YYYY/MM/DD HH:mm:ss \\G\\M\\T');
       } else if (this.timezone === 'localtz') {
-        timezonedDate = moment.tz(date, Intl.DateTimeFormat().resolvedOptions().timeZone).format('YYYY/MM/DD HH:mm:ss z');
+        let tzStr = moment.tz(0, Intl.DateTimeFormat().resolvedOptions().timeZone).format('z');
+        let tzArr = tzStr.split('');
+        let formattedStr = 'YYYY/MM/DD HH:mm:ss ';
+        for (let char of tzArr) {
+          formattedStr += `\\${char}`;
+        }
+        timezonedDate = moment(date).format(formattedStr);
       } else {
         timezonedDate = moment(date).format('YYYY/MM/DD HH:mm:ss');
       }
 
       return timezonedDate;
+    },
+    /**
+     * Parses a date number into a date string in the user configured timezone
+     * @param {number} date Seconds from 1970
+     */
+    parseTimezoneDate: function (date) {
+      date = date * 1000; // seconds to ms
+
+      let timezonedDate;
+      if (this.timezone === 'gmt') {
+        timezonedDate = moment.tz(date, 'gmt');
+      } else {
+        timezonedDate = moment(date);
+      }
+
+      return new Date(
+        timezonedDate.year(),
+        timezonedDate.month(),
+        timezonedDate.date(),
+        timezonedDate.hour(),
+        timezonedDate.minute(),
+        timezonedDate.second()
+      );
     }
   }
 };
