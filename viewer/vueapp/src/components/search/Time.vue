@@ -182,12 +182,19 @@ import moment from 'moment-timezone';
 const hourSec = 3600;
 let currentTimeSec;
 let dateChanged = false;
+let startDateCheck;
+let stopDateCheck;
 
 export default {
   name: 'MolochTime',
   components: { flatPickr },
   directives: { FocusInput },
-  props: [ 'timezone', 'hideBounding', 'hideInterval', 'updateTime' ],
+  props: [
+    'timezone',
+    'hideBounding',
+    'hideInterval',
+    'updateTime'
+  ],
   data: function () {
     return {
       deltaTime: null,
@@ -196,32 +203,30 @@ export default {
       timeInterval: this.$route.query.interval || 'auto',
       // use start/stop time localized to this component so that the time
       // watcher can compare time values to local (unaffected) start/stop times
-      localStartTime: undefined,
       localStopTime: undefined,
+      localStartTime: undefined,
       // date configs must be separate
       startTimeConfig: {
         dateFormat: 'U', // seconds from Jan 1, 1970
         wrap: true, // for input groups
-        altFormat: 'Y/m/d H:i:S', // 'yyyy/MM/dd HH:mm:ss'
         altInput: true, // input date display differs from model
         allowInput: true, // let user edit the input manually
         enableTime: true, // display time picker
         enableSeconds: true, // display seconds in time picker
         minuteIncrement: 1, // increment minutes by 1 instead of 5 (default)
         time_24hr: true, // show 24 hour time instead of am/pm
-        parseDate: this.parseTimezoneDate // show the date in the user configured timezone
+        formatDate: this.formatTimezoneDate // show the date in the user configured timezone
       },
       stopTimeConfig: {
         dateFormat: 'U', // seconds from Jan 1, 1970
         wrap: true, // for input groups
-        altFormat: 'Y/m/d H:i:S', // 'yyyy/MM/dd HH:mm:ss'
         altInput: true, // input date display differs from model
         allowInput: true, // let user edit the input manually
         enableTime: true, // display time picker
         enableSeconds: true, // display seconds in time picker
         minuteIncrement: 1, // increment minutes by 1 instead of 5 (default)
         time_24hr: true, // show 24 hour time instead of am/pm
-        parseDate: this.parseTimezoneDate // show the date in the user configured timezone
+        formatDate: this.formatTimezoneDate // show the date in the user configured timezone
       }
     };
   },
@@ -233,10 +238,17 @@ export default {
     'time': {
       deep: true,
       handler (newVal, oldVal) {
-        if (newVal && oldVal &&
-          (newVal.stopTime !== this.localStopTime ||
-          newVal.startTime !== this.localStartTime)) {
-          dateChanged = true;
+        if (newVal && oldVal) {
+          if (newVal.stopTime !== this.localStopTime) {
+            dateChanged = true;
+            this.localStopTime = newVal.stopTime;
+          }
+
+          if (newVal.startTime !== this.localStartTime) {
+            dateChanged = true;
+            this.localStartTime = this.time.startTime = newVal.startTime;
+          }
+
           this.validateDate();
         }
       }
@@ -321,20 +333,28 @@ export default {
      * Fired when start datetime is changed
      * Notes that the date has changed so it can be validated
      */
-    changeStartTime: function (selectedDates, dateStr, instance) {
-      if (this.time.startTime !== dateStr) {
+    changeStartTime: function (selectedDates, date, instance) {
+      let msDate = moment(selectedDates[0]).valueOf();
+      console.log('change start time', startDateCheck, msDate);
+      if (!startDateCheck || startDateCheck !== msDate) {
         dateChanged = true;
-        this.time.startTime = this.localStartTime = dateStr;
+        startDateCheck = msDate;
+        this.localStartTime = date;
+        this.time.startTime = JSON.parse(JSON.stringify(msDate / 1000)).toString();
       }
     },
     /**
      * Fired when stop datetime is changed
      * Notes that the date has changed so it can be validated
      */
-    changeStopTime: function (selectedDates, dateStr, instance) {
-      if (this.time.stopTime !== dateStr) {
+    changeStopTime: function (selectedDates, date, instance) {
+      let msDate = moment(selectedDates[0]).valueOf();
+      console.log('change stop time', stopDateCheck, msDate);
+      if (!stopDateCheck || stopDateCheck !== msDate) {
         dateChanged = true;
-        this.time.stopTime = this.localStopTime = dateStr;
+        stopDateCheck = msDate;
+        this.localStopTime = date;
+        this.time.stopTime = JSON.parse(JSON.stringify(msDate / 1000)).toString();
       }
     },
     /**
@@ -509,29 +529,19 @@ export default {
 
       if (change) { this.$emit('timeChange'); }
     },
-    /**
-     * Parses a date number into a date string in the user configured timezone
-     * @param {number} date Seconds from 1970
-     */
-    parseTimezoneDate: function (date) {
-      date = date * 1000; // seconds to ms
-
+    /* format the date to include the user selcted timezone */
+    formatTimezoneDate: function (date) {
       let timezonedDate;
 
       if (this.timezone === 'gmt') {
-        timezonedDate = moment.tz(date, 'gmt');
+        timezonedDate = moment.tz(date, 'gmt').format('YYYY/MM/DD HH:mm:ss z');
+      } else if (this.timezone === 'localtz') {
+        timezonedDate = moment.tz(date, Intl.DateTimeFormat().resolvedOptions().timeZone).format('YYYY/MM/DD HH:mm:ss z');
       } else {
-        timezonedDate = moment(date);
+        timezonedDate = moment(date).format('YYYY/MM/DD HH:mm:ss');
       }
 
-      return new Date(
-        timezonedDate.year(),
-        timezonedDate.month(),
-        timezonedDate.date(),
-        timezonedDate.hour(),
-        timezonedDate.minute(),
-        timezonedDate.second()
-      );
+      return timezonedDate;
     }
   }
 };
@@ -540,7 +550,7 @@ export default {
 <style>
 input.form-control.flatpickr-input {
   font-size: var(--px-lg);
-  max-width: 130px;
+  width: 160px;
 }
 </style>
 
