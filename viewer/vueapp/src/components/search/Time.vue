@@ -41,7 +41,7 @@
 
     <!-- start time -->
     <div class="form-group ml-1">
-      <div class="input-group input-group-sm">
+      <div class="input-group input-group-sm input-group-time">
         <span class="input-group-prepend cursor-help"
           placement="topright"
           v-b-tooltip.hover
@@ -53,6 +53,9 @@
         <date-picker v-model="localStartTime"
           :config="datePickerOptions"
           @dp-change="changeStartTime"
+          name="startTime"
+          ref="startTime"
+          id="startTime"
           tabindex="4">
         </date-picker>
       </div>
@@ -60,7 +63,7 @@
 
     <!-- stop time -->
     <div class="form-group ml-1">
-      <div class="input-group input-group-sm">
+      <div class="input-group input-group-sm input-group-time">
         <span class="input-group-prepend cursor-help"
           placement="topright"
           v-b-tooltip.hover
@@ -72,6 +75,9 @@
         <date-picker v-model="localStopTime"
           :config="datePickerOptions"
           @dp-change="changeStopTime"
+          name="stopTime"
+          ref="stopTime"
+          id="stopTime"
           tabindex="5">
         </date-picker>
       </div>
@@ -159,6 +165,7 @@ let currentTimeSec;
 let dateChanged = false;
 let startDateCheck;
 let stopDateCheck;
+let timeRangeUpdated = false;
 
 export default {
   name: 'MolochTime',
@@ -184,7 +191,10 @@ export default {
         useCurrent: false,
         format: 'YYYY/MM/DD HH:mm:ss',
         timeZone: this.timezone === 'local' || this.timezone === 'localtz' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'GMT',
-        showClose: true
+        showClose: true,
+        focusOnShow: false,
+        showTodayButton: true,
+        allowInputToggle: true
       }
     };
   },
@@ -208,8 +218,6 @@ export default {
             startDateCheck = newVal.startTime;
             this.localStartTime = moment(newVal.startTime * 1000);
           }
-
-          this.validateDate();
         }
       }
     },
@@ -288,14 +296,17 @@ export default {
           startTime: undefined
         }
       });
+
+      timeRangeUpdated = true;
     },
     /**
      * Fired when start datetime is changed
      * Notes that the date has changed so it can be validated
      */
     changeStartTime: function (event) {
+      timeRangeUpdated = false;
       let msDate = event.date.valueOf();
-      this.time.startTime = msDate / 1000;
+      this.time.startTime = Math.floor(msDate / 1000);
       this.validateDate();
     },
     /**
@@ -303,8 +314,9 @@ export default {
      * Notes that the date has changed so it can be validated
      */
     changeStopTime: function (event) {
+      timeRangeUpdated = false;
       let msDate = event.date.valueOf();
-      this.time.stopTime = msDate / 1000;
+      this.time.stopTime = Math.ceil(msDate / 1000);
       this.validateDate();
     },
     /**
@@ -343,7 +355,10 @@ export default {
       dateChanged = false;
 
       this.timeError = '';
-      this.timeRange = '0'; // custom time range
+
+      // if the time range wasn't updated, we can assume that the start/stop
+      // times were udpated, so set the timerange to custom
+      if (!timeRangeUpdated) { this.timeRange = '0'; }
 
       let stopSec = parseInt(this.time.stopTime, 10);
       let startSec = parseInt(this.time.startTime, 10);
@@ -386,8 +401,8 @@ export default {
       }
 
       if (parseInt(this.timeRange, 10) === -1) { // all time
-        this.localStartTime = moment(hourSec * 1000);
-        this.time.startTime = (hourSec).toString();
+        this.localStartTime = moment(0);
+        this.time.startTime = '0';
         this.localStopTime = moment(currentTimeSec * 1000);
         this.time.stopTime = currentTimeSec.toString();
       }
@@ -402,8 +417,8 @@ export default {
       if (date) { // time range is available
         this.timeRange = date;
         if (parseInt(this.timeRange, 10) === -1) { // all time
-          this.localStartTime = moment(hourSec * 1000);
-          this.time.startTime = (hourSec).toString();
+          this.localStartTime = moment(0);
+          this.time.startTime = '0';
           this.localStopTime = moment(currentTimeSec * 1000);
           this.time.stopTime = currentTimeSec.toString();
         } else if (this.timeRange > 0) {
@@ -500,5 +515,9 @@ select.form-control {
 
 .time-range-control {
   -webkit-appearance: none;
+}
+
+.input-group-time input.form-control {
+  font-size: 75%;
 }
 </style>
