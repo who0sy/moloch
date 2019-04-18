@@ -37,9 +37,33 @@ export default {
     });
   },
 
+  createNotifier: function (notifier) {
+    return new Promise((resolve, reject) => {
+      Vue.axios.post('api/notifiers', { notifier: notifier })
+        .then((response) => {
+          resolve(response.data);
+        })
+        .catch((error) => {
+          reject(error.response.data);
+        });
+    });
+  },
+
   testNotifier: function (notifierName) {
     return new Promise((resolve, reject) => {
       Vue.axios.post('api/testAlert', { notifier: notifierName })
+        .then((response) => {
+          resolve(response.data);
+        })
+        .catch((error) => {
+          reject(error.response.data);
+        });
+    });
+  },
+
+  getNotifierTypes: function () {
+    return new Promise((resolve, reject) => {
+      Vue.axios.get('api/notifierTypes')
         .then((response) => {
           resolve(response.data);
         })

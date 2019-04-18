@@ -1,0 +1,241 @@
+{
+  "version": 2,
+  "groups": [
+    {
+      "title": "Group 1",
+      "id": 0,
+      "clusters": [
+        {
+          "title": "Local Moloch",
+          "url": "http://localhost:8123/moloch",
+          "localUrl": "http://localhost:8123/moloch",
+          "id": 0,
+          "status": "yellow",
+          "totalNodes": 1,
+          "dataNodes": 1,
+          "deltaBPS": 12858,
+          "deltaTDPS": 0,
+          "molochNodes": 0,
+          "monitoring": 0
+        },
+        {
+          "title": "Silent Cluster",
+          "url": "silent/cluster/url",
+          "localUrl": "silent/cluster/url",
+          "id": 1,
+          "type": "noAlerts",
+          "healthError": "Error: Invalid URI \"silent/cluster/url/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"silent/cluster/url/parliament.json\""
+        },
+        {
+          "title": "cluster1",
+          "url": "cluster1",
+          "localUrl": "",
+          "id": 2,
+          "healthError": "Error: Invalid URI \"cluster1/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster1/parliament.json\""
+        },
+        {
+          "title": "cluster2",
+          "description": "",
+          "url": "cluster2",
+          "localUrl": "",
+          "id": 3,
+          "healthError": "Error: Invalid URI \"cluster2/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster2/parliament.json\""
+        },
+        {
+          "title": "cluster3",
+          "description": "",
+          "url": "cluster3",
+          "localUrl": "",
+          "id": 4,
+          "healthError": "Error: Invalid URI \"cluster3/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster3/parliament.json\""
+        },
+        {
+          "title": "cluster6",
+          "description": "",
+          "url": "cluster6",
+          "localUrl": "",
+          "id": 5,
+          "healthError": "Error: Invalid URI \"cluster6/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster6/parliament.json\""
+        },
+        {
+          "title": "cluster7",
+          "url": "cluster7",
+          "id": 6,
+          "healthError": "Error: Invalid URI \"cluster7/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster7/parliament.json\""
+        },
+        {
+          "title": "cluster8",
+          "url": "cluster8",
+          "id": 7,
+          "healthError": "Error: Invalid URI \"cluster8/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster8/parliament.json\""
+        },
+        {
+          "title": "cluster9",
+          "url": "cluster9",
+          "id": 8,
+          "healthError": "Error: Invalid URI \"cluster9/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster9/parliament.json\""
+        },
+        {
+          "title": "cluster10",
+          "url": "cluster10",
+          "id": 9,
+          "healthError": "Error: Invalid URI \"cluster10/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster10/parliament.json\""
+        },
+        {
+          "title": "cluster11",
+          "url": "cluster11",
+          "id": 10,
+          "healthError": "Error: Invalid URI \"cluster11/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster11/parliament.json\""
+        },
+        {
+          "title": "cluster12",
+          "description": "",
+          "url": "cluster12",
+          "localUrl": "",
+          "id": 11,
+          "healthError": "Error: Invalid URI \"cluster12/eshealth.json\"",
+          "statsError": "Error: Invalid URI \"cluster12/parliament.json\""
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "general": {
+      "noPackets": 0,
+      "noPacketsLength": 10,
+      "outOfDate": 30,
+      "esQueryTimeout": 5,
+      "removeIssuesAfter": 60,
+      "removeAcknowledgedAfter": 15,
+      "hostname": "us167245"
+    },
+    "notifiers": {
+      "slack": {
+        "name": "slack",
+        "fields": {
+          "slackWebhookUrl": {
+            "name": "slackWebhookUrl",
+            "required": true,
+            "type": "secret",
+            "description": "Incoming Webhooks are a simple way to post messages from external sources into Slack.",
+            "value": "https://hooks.slack.com/services/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"
+          }
+        },
+        "alerts": {
+          "esRed": true,
+          "esDown": true,
+          "esDropped": true,
+          "outOfDate": true,
+          "noPackets": true
+        },
+        "on": true
+      },
+      "twilio": {
+        "name": "twilio",
+        "fields": {
+          "accountSid": {
+            "name": "accountSid",
+            "required": true,
+            "type": "secret",
+            "description": "Twilio account ID",
+            "value": ""
+          },
+          "authToken": {
+            "name": "authToken",
+            "required": true,
+            "type": "secret",
+            "description": "Twilio authentication token",
+            "value": ""
+          },
+          "toNumber": {
+            "name": "toNumber",
+            "required": true,
+            "description": "The number to send the alert to",
+            "value": ""
+          },
+          "fromNumber": {
+            "name": "fromNumber",
+            "required": true,
+            "description": "The number to send the alert from",
+            "value": ""
+          }
+        },
+        "alerts": {
+          "esRed": true,
+          "esDown": true,
+          "esDropped": true,
+          "outOfDate": true,
+          "noPackets": true
+        }
+      },
+      "email": {
+        "name": "email",
+        "fields": {
+          "secure": {
+            "name": "secure",
+            "type": "checkbox",
+            "description": "Send the email securely",
+            "value": ""
+          },
+          "host": {
+            "name": "host",
+            "required": true,
+            "description": "Email host",
+            "value": ""
+          },
+          "port": {
+            "name": "port",
+            "required": true,
+            "description": "Email port",
+            "value": ""
+          },
+          "user": {
+            "name": "user",
+            "description": "The username of the user sending the email",
+            "value": ""
+          },
+          "password": {
+            "name": "password",
+            "type": "secret",
+            "description": "Password of the user sending the email",
+            "value": ""
+          },
+          "from": {
+            "name": "from",
+            "required": true,
+            "description": "Send the email from this address",
+            "value": ""
+          },
+          "to": {
+            "name": "to",
+            "required": true,
+            "description": "Send the email to this address",
+            "value": ""
+          },
+          "subject": {
+            "name": "subject",
+            "description": "The subject of the email (defaults to \"Parliament Alert\")",
+            "value": ""
+          }
+        },
+        "alerts": {
+          "esRed": true,
+          "esDown": true,
+          "esDropped": true,
+          "outOfDate": true,
+          "noPackets": true
+        }
+      }
+    }
+  }
+}
