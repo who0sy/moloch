@@ -1,4 +1,4 @@
-notifierTypes<template>
+<template>
 
   <div class="settings-content">
 
@@ -355,14 +355,14 @@ notifierTypes<template>
           <h3>
             Notifiers
             <button v-if="notifierTypes"
-              v-for="notifier of notifierTypes"
-              :key="notifier.name"
+              v-for="(notifierType, ntKey) of notifierTypes"
+              :key="notifierType.name"
               class="btn btn-outline-primary btn-sm pull-right ml-1"
               type="button"
-              @click="createNewNotifier(notifier)">
+              @click="createNewNotifier(notifierType, ntKey)">
               <span class="fa fa-plus-circle">
               </span>&nbsp;
-              Create {{ notifier.type }} Notifier
+              Create {{ notifierType.name }} Notifier
             </button>
           </h3>
           <hr>
@@ -405,7 +405,6 @@ notifierTypes<template>
 
             <form class="form-horizontal col-12">
 
-              <!-- TODO test -->
               <div v-if="!settings.notifiers || !Object.keys(settings.notifiers).length"
                 class="alert alert-info">
                 <span class="fa fa-info-circle fa-lg">
@@ -415,8 +414,7 @@ notifierTypes<template>
                 </strong>
                 <br>
                 <br>
-                Create one by clicking the create button above
-                and add it to your cron queries on the cron tab!
+                Create one by clicking the create button above.
               </div>
 
               <!-- new notifier -->
@@ -425,21 +423,26 @@ notifierTypes<template>
                 <div class="col">
                   <div class="card mb-3">
                     <div class="card-body">
-                      <!-- newNotifier title -->
+                      <!-- notifier title -->
                       <h4 class="mb-3">
-                        {{ newNotifier.type }}
-                        <span v-if="newNotifierError"
-                          class="alert alert-sm alert-danger pull-right pr-2">
-                          {{ newNotifierError }}
-                          <span class="fa fa-close cursor-pointer"
-                            @click="newNotifierError = ''">
-                          </span>
+                        Create new {{ newNotifier.type }} notifier
+                        <span v-if="!newNotifier.on"
+                          @click="$set(newNotifier, 'on', !newNotifier.on)"
+                          class="fa fa-toggle-off fa-lg pull-right cursor-pointer"
+                          title="Turn the new notifier on"
+                          v-b-tooltip.hover.bottom-right>
                         </span>
-                      </h4> <!-- /new notifier title -->
+                        <span v-if="newNotifier.on"
+                          @click="$set(newNotifier, 'on', !newNotifier.on)"
+                          class="fa fa-toggle-on fa-lg pull-right cursor-pointer text-success"
+                          title="Turn the new notifier off"
+                          v-b-tooltip.hover.bottom-right>
+                        </span>
+                      </h4> <!-- /notifier title -->
                       <!-- new notifier name -->
                       <div class="input-group">
                         <span class="input-group-prepend cursor-help"
-                          :title="`Give your ${newNotifier.type} notifier a unique name`"
+                          :title="`Give your ${newNotifier.name} notifier a unique name`"
                           v-b-tooltip.hover.bottom-left>
                           <span class="input-group-text">
                             Name
@@ -485,12 +488,33 @@ notifierTypes<template>
                           &nbsp;{{ field.name }}
                         </label>
                       </div> <!-- /new notifier fields -->
+                      <!-- describe notifier alerts -->
+                      <h5>Notify on</h5>
+                      <div class="row">
+                        <div class="col-12">
+                          <div v-for="(alert, aKey) of newNotifier.alerts"
+                            :key="alert.name"
+                            class="form-check form-check-inline"
+                            :title="`Notify if ${notifierTypes[newNotifier.type].alerts[aKey].description}`"
+                            v-b-tooltip.hover.top>
+                            <label class="form-check-label">
+                              <input class="form-check-input"
+                                type="checkbox"
+                                :id="notifierTypes[newNotifier.type].alerts[aKey].name+'newNotifier'"
+                                :name="notifierTypes[newNotifier.type].alerts[aKey].name+'newNotifier'"
+                                v-model="newNotifier.alerts[aKey].on"
+                              />
+                              {{ notifierTypes[newNotifier.type].alerts[aKey].name }}
+                            </label>
+                          </div>
+                        </div>
+                      </div> <!-- /notifier alerts -->
                       <!-- new notifier actions -->
                       <div class="row mt-3">
                         <div class="col-12">
                           <button type="button"
                             class="btn btn-sm btn-outline-warning cursor-pointer"
-                            @click="clearNotifierFields">
+                            @click="clearNewNotifierFields">
                             Clear fields
                           </button>
                           <button type="button"
@@ -502,7 +526,7 @@ notifierTypes<template>
                           </button>
                           <button type="button"
                             class="btn btn-sm btn-warning cursor-pointer pull-right"
-                            @click="newNotifier = undefined">
+                            @click="newNotifier = undefined;">
                             <span class="fa fa-ban">
                             </span>&nbsp;
                             Cancel
@@ -524,7 +548,7 @@ notifierTypes<template>
                     <div class="card-body">
                       <!-- notifier title -->
                       <h4 class="mb-3">
-                        {{ notifierTypes[nKey].type }} Notifier
+                        {{ notifierTypes[notifier.type].name }} Notifier
                         <span v-if="!notifier.on"
                           @click="toggleNotifier(notifier)"
                           class="fa fa-toggle-off fa-lg pull-right cursor-pointer"
@@ -571,7 +595,6 @@ notifierTypes<template>
                           </span>
                           <input :class="{'form-control':field.type !== 'checkbox'}"
                             v-model="field.value"
-                            @input="debounceInput"
                             :type="getFieldInputType(field)"
                           />
                           <span v-if="field.type === 'secret'"
@@ -594,19 +617,19 @@ notifierTypes<template>
                       <div class="row">
                         <div class="col-12">
                           <div v-for="(alert, aKey) of notifier.alerts"
-                            :key="alert.name"
+                            :key="aKey"
                             class="form-check form-check-inline"
-                            :title="`Notify if ${notifierTypes[nKey].alerts[aKey].description}`"
+                            :title="`Notify if ${notifierTypes[notifier.type].alerts[aKey].description}`"
                             v-b-tooltip.hover.top>
                             <label class="form-check-label">
                               <input class="form-check-input"
                                 type="checkbox"
                                 @input="updateAlert(nKey, aKey)"
-                                :id="notifierTypes[nKey].alerts[aKey].id"
-                                :name="notifierTypes[nKey].alerts[aKey].id"
+                                :id="notifierTypes[notifier.type].alerts[aKey].name+notifier.name"
+                                :name="notifierTypes[notifier.type].alerts[aKey].name+notifier.name"
                                 v-model="notifier.alerts[aKey]"
                               />
-                              {{ notifierTypes[nKey].alerts[aKey].name }}
+                              {{ notifierTypes[notifier.type].alerts[aKey].name }}
                             </label>
                           </div>
                         </div>
@@ -620,6 +643,13 @@ notifierTypes<template>
                             <span class="fa fa-bell">
                             </span>&nbsp;
                             Test
+                          </button>
+                          <button type="button"
+                            class="btn btn-sm btn-success cursor-pointer pull-right ml-1"
+                            @click="updateNotifier(nKey, notifier)">
+                            <span class="fa fa-save">
+                            </span>&nbsp;
+                            Save
                           </button>
                           <button type="button"
                             class="btn btn-sm btn-danger cursor-pointer pull-right"
@@ -732,12 +762,6 @@ export default {
         hash: tabName
       });
     },
-    updateAlert: function (notifier, alert) {
-      this.settings.notifiers[notifier].alerts[alert] =
-        !this.settings.notifiers[notifier].alerts[alert];
-      this.saveSettings();
-    },
-    // TODO
     saveSettings: function () {
       this.success = '';
       if (successCloseTimeout) { clearTimeout(successCloseTimeout); }
@@ -779,10 +803,12 @@ export default {
           this.settingsError = error.text || 'Error saving settings.';
         });
     },
+    /* toggles a notifier on/off */
     toggleNotifier: function (notifier) {
       this.$set(notifier, 'on', !notifier.on);
-      this.saveSettings();
+      this.updateNotifier(notifier.name, notifier);
     },
+    /* tests an existing notifier */
     testNotifier: function (notifierName) {
       SettingsService.testNotifier(notifierName)
         .then((data) => {
@@ -794,17 +820,18 @@ export default {
           this.settingsError = error.text || 'Error issuing alert.';
         });
     },
-    // TODO
-    clearNotifierFields: function (notifier) {
-      for (let f in notifier.fields) {
-        notifier.fields[f].value = '';
-      }
-      this.saveSettings();
-    },
     /* opens the form to create a new notifier */
-    createNewNotifier: function (notifier) {
-      this.newNotifier = notifier;
+    createNewNotifier: function (notifier, ntKey) {
+      this.newNotifier = JSON.parse(JSON.stringify(notifier));
     },
+    /* clears new notifier form fields */
+    clearNewNotifierFields: function () {
+      this.newNotifier.name = '';
+      for (let f in this.newNotifier.fields) {
+        this.newNotifier.fields[f].value = '';
+      }
+    },
+    /* creates a new notifier */
     createNotifier: function () {
       if (!this.newNotifier) {
         this.newNotifierError = 'No notifier chosen';
@@ -817,33 +844,65 @@ export default {
       }
 
       // make sure required fields are filled
-      for (let field of this.newNotifier.fields) {
+      for (let f in this.newNotifier.fields) {
+        let field = this.newNotifier.fields[f];
         if (!field.value && field.required) {
           this.newNotifierError = `${field.name} is required`;
           return;
         }
       }
 
-      // TODO
+      // remove alert objects and replace with bools
+      for (let a in this.newNotifier.alerts) {
+        this.newNotifier.alerts[a] = this.newNotifier.alerts[a].on;
+      }
+
       SettingsService.createNotifier(this.newNotifier)
         .then((data) => {
           // display success message to user
-          this.msg = data.text || 'Successfully created new notifier.';
-          this.msgType = 'success';
+          this.settingsError = '';
+          this.success = data.text || 'Successfully created new notifier.';
           this.closeSuccess();
-          this.notifiersError = '';
           // add notifier to the list
-          this.notifiers[data.name] = this.newNotifier;
-          this.newNotifier = undefined;
+          this.settings.notifiers[data.name] = this.newNotifier;
+          this.newNotifier = undefined; // remove form
         })
         .catch((error) => {
-          this.msg = error.text || 'Error creating new notifier.';
-          this.msgType = 'danger';
+          this.settingsError = error.text || 'Error creating new notifier.';
         });
     },
-    removeNotifier: function (notifier) {
-      this.settings.notifiers[notifier] = undefined;
-      this.saveSettings();
+    /* deletes an existing notifier */
+    removeNotifier: function (notifierKey) {
+      SettingsService.removeNotifier(notifierKey)
+        .then((data) => {
+          // display success message to user
+          this.settingsError = '';
+          this.success = data.text || 'Successfully removed notifier.';
+          this.closeSuccess();
+          // remove notifier from the list
+          this.$delete(this.settings.notifiers, notifierKey);
+        })
+        .catch((error) => {
+          this.settingsError = error.text || 'Error removing notifier.';
+        });
+    },
+    /* updates an existing notifier */
+    updateNotifier: function (notifierKey, notifier) {
+      SettingsService.updateNotifier(notifierKey, notifierKey, notifier)
+        .then((data) => {
+          // display success message to user
+          this.settingsError = '';
+          this.success = data.text || 'Successfully updated notifier.';
+          this.closeSuccess();
+        })
+        .catch((error) => {
+          this.settingsError = error.text || 'Error updating notifier.';
+        });
+    },
+    /* toggles alert types on an existing notifier */
+    updateAlert: function (notifier, alert) {
+      this.settings.notifiers[notifier].alerts[alert] =
+        !this.settings.notifiers[notifier].alerts[alert];
     },
     getFieldInputType: function (field) {
       if (field.type === 'checkbox') {

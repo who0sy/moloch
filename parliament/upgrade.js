@@ -45,6 +45,10 @@ module.exports = {
           }
         }
 
+        // add or lowercase the type
+        if (notifier.type) { notifier.type = notifier.type.toLowerCase(); }
+        else { notifier.type = n; }
+
         // if the notifier has no values, it's not being used, so remove it
         if (!hasValues) { parliament.settings.notifiers[n] = undefined; }
       }
